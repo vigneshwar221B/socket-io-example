@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Chat app</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        #chat{
+            height: 500px;
+        }
+        #contentWrap{
+            display: none;
+        }
+        #chatWrap{
+            float: left;
+            border: 1px #000 solid;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="nickWrap">
+        <p>enter a username:</p>
+        <p id="nickError"></p>
+        <form id="setNick">
+            <input size="35" id="nickname" autocomplete="off"></input>
+            <input type="submit"></input>
+        </form>
+    </div>
+    <div id="contentWrap">
+        <div id="chatWrap">
+            <div id="chat"></div>
+            <form id="send-message">
+            
+                <input size="35" id="message" autocomplete="off"></input>
+                <input type="submit"></input>
+            
+            </form>
+        </div>
+        Online Members:
+        <div id="users"></div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+        var socket = io.connect();
+        var $nickForm = $('#setNick');
+        var $nickError = $('#nickError');
+        var $users = $('#users')
+        var $nickBox = $('#nickname');
+        var $msgForm = $('#send-message'); 
+        var $msgInput = $('#message');
+        var $chatHistory = $('#chat');
+
+        $nickForm.submit((e)=>{
+            e.preventDefault();
+            socket.emit('new user',$nickBox.val(), (data)=>{
+                if (data) {
+
+                    $('#nickWrap').hide();
+                    $('#contentWrap').show();
+                    
+                } else {
+                    $nickError.html('username is taken!');
+                }
+            });
+            $nickBox.val('');
+        });
+
+        socket.on('usernames',(data)=>{
+            var html1 = '';
+            for(var i=0;i<data.length;i++){
+                html1 += data[i]+"<br/>"
+            }
+            $users.html(html1);
+        });
+
+        $msgForm.submit((e)=>{
+            e.preventDefault();
+            socket.emit('sendMessage', $msgInput.val());
+            $msgInput.val('');
+        });
+
+        socket.on('new message',(data)=>{
+            $chatHistory.append(data.nick+":"+data.msg+"<br/>");
+        });
+    </script>
+
+</body>
+
+</html>
